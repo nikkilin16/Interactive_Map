@@ -1,0 +1,112 @@
+---
+title: "Interactive Map tryout"
+author: "Nikki Lin"
+date: "1/5/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE, results='hide',fig.keep='all'}
+library(sf)
+library(janitor)
+library(readxl)
+library(tidyverse)
+library(leaflet)
+library(leaflegend)
+library(formattable)
+```
+
+```{r, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE, results='hide',fig.keep='all'}
+# Dataset of various crime instances in certain CA cities
+city_crime_rate <- read_excel("california.xls") %>% 
+   clean_names()
+
+# Dataset of CA cities & their corresponding geometry
+# sf object
+county_city <- read.csv("uscities.csv") %>% 
+  filter(state_name == "California") %>% 
+  rename(city = city, county = county_name) %>% 
+  select(city, county, lat, lng) %>% 
+  st_as_sf(coords = c("lng", "lat"), crs = 4326) %>% 
+  inner_join(city_crime_rate, by="city") %>% 
+  # create total_crime_rate variable for the map:
+  mutate(total_crime_rate = (violent_crime+property_crime)/population*100000)
+
+# Dataset of income rates for each CA county
+CA_median_income <- read.csv("median_income_CA_2014-2018.csv") %>% 
+  rename(income=Value) %>% 
+  rename(county=County)
+# Convert income to numeric variable:
+CA_median_income$income <- as.numeric(gsub(",","",CA_median_income$income))
+
+# Dataset including income and total crime rate for each CA city
+city_crime_income <- county_city %>% 
+  inner_join(CA_median_income, by = "county") %>% 
+  select(city, total_crime_rate, income, geometry) %>% 
+  #Round total_crime_rates to whole numbers
+  mutate_if(is.numeric, round)
+
+# Add comma separators to total_crime_rate
+city_crime_income$total_crime_rate <- prettyNum(city_crime_income$total_crime_rate , big.mark=",", preserve.width="none")
+
+# Convert income to currency format using formattable currency() function
+city_crime_income$income <- currency(city_crime_income$income, digits = 0L)
+```
+
+```{r, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE, results='hide',fig.keep='all'}
+palette1 <- c("#00db1d", "#91ef13", "#fbf704", "#fbcc04", "#fbb904", "#fb9804", "#fb7f04", "#fb3304")
+
+pal <- colorFactor(palette = colorRampPalette(palette1)(length(city_crime_income$total_crime_rate)), domain = city_crime_income$total_crime_rate)
+# ^^ palette specifies the colors used to map the data, domain specifies the range of input values
+
+# Finally, the visualization!
+city_crime_income %>% 
+  leaflet() %>%
+  addProviderTiles(providers$CartoDB.VoyagerLabelsUnder, group = "With text") %>%
+  addProviderTiles(providers$CartoDB.VoyagerNoLabels, group = "Without text") %>% 
+  # ^^ Pick out the map's appearance using providers$_______ (see themes: https://leaflet-extras.github.io/leaflet-providers/preview/)
+  addLayersControl(baseGroups = c("With text", "Without text")) %>% 
+  # ^^ Adds multiple layers to the map, and select the theme you want to see
+  addCircleMarkers(
+    radius = ~income/10000,
+    color = "white",
+    fillColor  = ~pal(total_crime_rate),
+    stroke = TRUE, weight = 1, fillOpacity = 0.7,
+    # ^^ stroke adds border to circles
+    label = ~city,
+    labelOptions = labelOptions(noHide = FALSE, offset=c(0,-12), textOnly = FALSE),
+    # ^^ noHide = FALSE ensures that labels only show up when you hover your mouse over point
+    # textOnly = TRUE would remove popup bubble
+    popup = ~paste(city_crime_income$city, "<br>",
+                           "Median income:", city_crime_income$income, "<br>",
+                           "Total crime rate:", city_crime_income$total_crime_rate, "<br>")
+  ) %>%
+  # NOTE: labels and popups differ in that labels show up when you hover over a point, popups only show up after you click on that point
+  setView(lat = 36.7783, lng = -119.4179, zoom = 5) %>% 
+  # ^^ setView sets the map to appear a certain way when you run the code
+  addMiniMap(
+    toggleDisplay = TRUE,
+    tiles = providers$CartoDB.VoyagerLabelsUnder
+    ) %>% 
+  # ^^ toggleDisplay allows you to close the minimap
+   addLegend("bottomright", 
+             colors =c("#fb3304", "#fb7f04", "#fb9804", "#fbb904","#fbcc04","#fbf704","#91ef13", "#00db1d"),
+             labels= c("high", "","","","","","", "low"),
+             title = "Total Crime Rate",
+             opacity = 1
+  ) %>% 
+  addLegendSize(
+    values = city_crime_income$income,
+    color = 'white',
+    fillColor = 'black',
+    opacity = .5,
+    title = 'Median Income',
+    shape = 'circle',
+    orientation = 'horizontal',
+    sizeBreaks(values = c(40000, 60000, 80000, 100000), breaks = 5),
+    position = "topright")
+```
+
