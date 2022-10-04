@@ -122,6 +122,8 @@ city_crime_income %>%
     saveas("~/Downloads/Data Science/final_project/index.html")
 ```
 
->Additional links:
->Final Project: https://nikkierasky.netlify.app/index.html#Is_there_a_correlation_between_crime_rate_and_income
->Interactive Map: https://first-interactive-map.netlify.app/
+**Additional links:**
+
+Final Project: https://nikkierasky.netlify.app/index.html#Is_there_a_correlation_between_crime_rate_and_income
+
+Interactive Map: https://first-interactive-map.netlify.app/
