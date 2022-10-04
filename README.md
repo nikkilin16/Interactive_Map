@@ -1,10 +1,12 @@
 # Interactive Map
 
-```{r setup, include=FALSE}
+``` r
+{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r, echo=TRUE,warning=FALSE,message=FALSE,error=FALSE, results='hide',fig.keep='all'}
+```r
+{r, echo=TRUE,warning=FALSE,message=FALSE,error=FALSE, results='hide',fig.keep='all'}
 library(sf)
 library(janitor)
 library(readxl)
@@ -14,7 +16,8 @@ library(leaflegend)
 library(formattable)
 ```
 
-```{r, echo=TRUE,warning=FALSE,message=FALSE,error=FALSE, results='hide',fig.keep='all'}
+```r
+{r, echo=TRUE,warning=FALSE,message=FALSE,error=FALSE, results='hide',fig.keep='all'}
 ### load these two functions into your session
 saveas <- function(map, file){
     class(map) <- c("saveas",class(map))
@@ -63,7 +66,8 @@ city_crime_income$total_crime_rate <- prettyNum(city_crime_income$total_crime_ra
 city_crime_income$income <- currency(city_crime_income$income, digits = 0L)
 ```
 
-```{r, echo=TRUE,warning=FALSE,message=FALSE,error=FALSE, results='hide',fig.keep='all'}
+```r
+{r, echo=TRUE,warning=FALSE,message=FALSE,error=FALSE, results='hide',fig.keep='all'}
 palette1 <- c("#00db1d", "#91ef13", "#fbf704", "#fbcc04", "#fbb904", "#fb9804", "#fb7f04", "#fb3304")
 
 pal <- colorFactor(palette = colorRampPalette(palette1)(length(city_crime_income$total_crime_rate)), domain = city_crime_income$total_crime_rate)
@@ -118,6 +122,6 @@ city_crime_income %>%
     saveas("~/Downloads/Data Science/final_project/index.html")
 ```
 
-Additional links:
-Final Project: https://nikkierasky.netlify.app/index.html#Is_there_a_correlation_between_crime_rate_and_income
-Interactive Map: https://first-interactive-map.netlify.app/
+>Additional links:
+>Final Project: https://nikkierasky.netlify.app/index.html#Is_there_a_correlation_between_crime_rate_and_income
+>Interactive Map: https://first-interactive-map.netlify.app/
